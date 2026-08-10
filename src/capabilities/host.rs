@@ -17,7 +17,7 @@ use everruns_core::command::{
 use everruns_core::tool_narration::{ToolNarrationPhase, arg_str, truncate};
 use everruns_core::tool_types::ToolCall;
 use everruns_core::tools::{Tool, ToolExecutionResult};
-use everruns_runtime::RuntimeProviderStore;
+use everruns_host::RuntimeProviderStore;
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};

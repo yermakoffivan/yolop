@@ -3330,7 +3330,7 @@ impl App {
         self.start_turn(prompt);
     }
 
-    async fn after_turn_user_ask_check(&mut self, result: Option<everruns_runtime::TurnResult>) {
+    async fn after_turn_user_ask_check(&mut self, result: Option<everruns_host::TurnResult>) {
         if !self.user_ask_enabled {
             return;
         }
@@ -6514,7 +6514,7 @@ mod tests {
             .record_user_prompt(session_id, "edit the file")
             .expect("record ask");
         test.app
-            .after_turn_user_ask_check(Some(everruns_runtime::TurnResult {
+            .after_turn_user_ask_check(Some(everruns_host::TurnResult {
                 response: "I need the path. Which file should I edit?".to_string(),
                 iterations: 1,
                 tool_calls_count: 0,

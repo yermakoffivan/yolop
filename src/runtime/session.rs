@@ -95,7 +95,7 @@ impl Session {
     pub async fn activate_capability(
         &self,
         capability_id: &str,
-    ) -> Result<everruns_runtime::CapabilityDelta> {
+    ) -> Result<everruns_host::CapabilityDelta> {
         self.handles.activate_capability(capability_id).await
     }
 
@@ -104,7 +104,7 @@ impl Session {
     pub async fn deactivate_capability(
         &self,
         capability_id: &str,
-    ) -> Result<everruns_runtime::CapabilityDelta> {
+    ) -> Result<everruns_host::CapabilityDelta> {
         self.handles.deactivate_capability(capability_id).await
     }
 
@@ -509,6 +509,7 @@ mod tests {
         impl ChatDriver for ModelListingDriver {
             async fn chat_completion_stream(
                 &self,
+                _endpoint: &everruns_core::ProviderEndpoint,
                 _messages: Vec<LlmMessage>,
                 _config: &LlmCallConfig,
             ) -> EverrunsResult<LlmResponseStream> {
@@ -516,7 +517,10 @@ mod tests {
                 panic!("unavailable model must be rejected before provider send")
             }
 
-            async fn list_models(&self) -> EverrunsResult<Option<Vec<DiscoveredModel>>> {
+            async fn list_models(
+                &self,
+                _endpoint: &everruns_core::ProviderEndpoint,
+            ) -> EverrunsResult<Option<Vec<DiscoveredModel>>> {
                 Ok(Some(vec![DiscoveredModel {
                     model_id: "different-model".to_string(),
                     display_name: None,

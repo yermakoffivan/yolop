@@ -598,7 +598,7 @@ mod tests {
     use everruns_core::capabilities::{Capability, ToolOutputPersistenceCapability};
     use everruns_core::typed_id::SessionId;
     use everruns_core::{ToolCall, ToolContext};
-    use everruns_runtime::RealDiskFileStore;
+    use everruns_host::RealDiskFileStore;
     use std::sync::Mutex;
 
     #[cfg(target_os = "macos")]

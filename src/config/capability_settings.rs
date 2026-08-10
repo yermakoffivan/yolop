@@ -276,7 +276,10 @@ pub fn apply_capability_settings(
             .iter_mut()
             .find(|cap| cap.capability_id() == entry.capability_ref)
         {
-            existing.config = merge_config(&existing.config, &entry.config);
+            // `CapabilityRef` keeps its config private since the 0.18
+            // capability contract; merge through the accessors.
+            let merged = merge_config(existing.config_value(), &entry.config);
+            existing.set_config(merged);
         } else {
             caps.push(AgentCapabilityConfig::with_config(
                 entry.capability_ref.clone(),
@@ -345,7 +348,7 @@ pub fn effective_harness_json(caps: &[AgentCapabilityConfig]) -> Vec<Value> {
             json!({
                 "index": index,
                 "ref": cap.capability_id(),
-                "config": cap.config,
+                "config": cap.config_value(),
             })
         })
         .collect()
@@ -448,7 +451,7 @@ mod tests {
             .iter()
             .find(|c| c.capability_id() == "web_fetch")
             .expect("web_fetch still enabled");
-        assert_eq!(cap.config["enable_file_download"], false);
+        assert_eq!(cap.config_value()["enable_file_download"], false);
     }
 
     #[test]

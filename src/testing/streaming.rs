@@ -17,7 +17,7 @@ use std::time::Duration;
 use everruns_core::events::EventData;
 use tokio::sync::mpsc;
 
-use everruns_core::llmsim_driver::LlmSimConfig;
+use everruns_test_support::llmsim_driver::LlmSimConfig;
 
 use std::sync::Arc;
 

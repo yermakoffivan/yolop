@@ -130,6 +130,10 @@ mod tests {
 
     fn test_session(session_id: SessionId) -> Session {
         Session {
+            // 0.18 records how a session started and an outcome-oriented
+            // activity; test fixtures take the defaults.
+            source: Default::default(),
+            activity: Default::default(),
             id: session_id,
             workspace_id: everruns_core::WorkspaceId::from_uuid(session_id.uuid()),
             organization_id: everruns_core::DEFAULT_ORG_PUBLIC_ID.to_string(),

@@ -2,13 +2,13 @@ use crate::auth::codex::CODEX_ORIGINATOR;
 use crate::config::{CodexAuth, SettingsStore};
 use async_trait::async_trait;
 use eventsource_stream::Eventsource;
+use everruns_core::ProviderEndpoint;
 use everruns_core::driver_registry::{
     ChatDriver, DriverConfig, LlmCallConfig, LlmCompletionMetadata, LlmContentPart, LlmMessage,
     LlmMessageContent, LlmMessageRole, LlmResponseStream, LlmStreamError, LlmStreamEvent,
     ProviderMetadata, ProviderOpaqueContext,
 };
 use everruns_core::driver_registry::{DiscoveredModel, DriverRegistry};
-use everruns_core::ProviderEndpoint;
 use everruns_core::error::{AgentLoopError, LlmErrorKind, Result as EverrunsResult};
 use everruns_core::tool_types::{ToolCall, ToolDefinition};
 use everruns_core::{
@@ -1217,6 +1217,7 @@ mod tests {
 
         let response = ChatDriver::compact(
             &driver,
+            &ProviderEndpoint::default(),
             CompactRequest {
                 model: "gpt-5.6".to_string(),
                 input: vec![everruns_core::CompactInputItem::Message {

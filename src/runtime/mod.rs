@@ -63,7 +63,6 @@ use everruns_core::driver_registry::{DriverRegistry, ProviderMetadata};
 use everruns_core::error::AgentLoopError;
 use everruns_core::get_model_profile;
 use everruns_core::in_memory::InMemoryMessageRetriever;
-use everruns_core::llmsim_driver::LlmSimConfig;
 use everruns_core::message::{ContentPart, MessageRole};
 use everruns_core::session_file::{
     FileInfo, FileStat, GrepMatch, GrepOptions, GrepSearchResult, InitialFile, SessionFile,
@@ -78,16 +77,18 @@ use everruns_core::{
 use everruns_core::{
     DriverId, ModelProfile, ReasoningEffortConfig, ReasoningEffortValue, SessionStore,
 };
+use everruns_host::RuntimeProviderStore;
+use everruns_host::{
+    AgentBuilder, CapabilityDelta, HarnessBuilder, HostBackends, InMemorySessionFileStore,
+    InProcessRuntime, InProcessRuntimeBuilder, RealDiskFileStore, RuntimeSessionStore,
+    SessionBuilder, WriteBlocklistFileStore,
+};
 use everruns_integrations_daytona::DaytonaCapability;
 use everruns_integrations_duckduckgo::DuckDuckGoCapability;
 use everruns_local::{LocalBackends, LocalProfile, LocalScheduleRunnerHandle};
 use everruns_mcp::{McpAuthProvider, McpAuthRequest, McpCredential};
-use everruns_runtime::RuntimeProviderStore;
-use everruns_runtime::{
-    AgentBuilder, CapabilityDelta, HarnessBuilder, InMemorySessionFileStore, InProcessRuntime,
-    InProcessRuntimeBuilder, RealDiskFileStore, RuntimeBackends, RuntimeSessionStore,
-    SessionBuilder, WriteBlocklistFileStore,
-};
+use everruns_test_support::LlmSimRuntimeExt;
+use everruns_test_support::llmsim_driver::LlmSimConfig;
 
 use crate::capabilities::host::SetupController;
 use crate::exec::workspace_host::WorkspaceHost;
@@ -102,6 +103,15 @@ use std::path::PathBuf;
 use std::sync::{Arc, LazyLock, Mutex as StdMutex, RwLock};
 use std::time::Duration;
 use tokio::sync::{RwLock as AsyncRwLock, mpsc};
+
+// TM-FS: upstream deprecated `DEFAULT_WRITE_BLOCKLIST` in favour of
+// `WorkspacePolicy`. Swapping yolop's write-protection over is a
+// security-relevant change that deserves its own review rather than riding
+// along with the 0.18 migration, so the legacy list stays for now behind a
+// single alias instead of an `allow` at every call site.
+#[cfg(test)]
+#[allow(deprecated)]
+const WRITE_BLOCKLIST: &[&str] = everruns_host::DEFAULT_WRITE_BLOCKLIST;
 
 /// Default no-output stream-liveness window. Matches everruns-core's Reason
 /// atom default and the provider reconnect first-item bound so silent HTTP 200
@@ -2364,7 +2374,7 @@ impl RuntimeHandles {
         &self,
         prompt: &str,
         input: InputMessage,
-    ) -> anyhow::Result<everruns_runtime::TurnResult> {
+    ) -> anyhow::Result<everruns_host::TurnResult> {
         let checkpoint = self.checkpoints.start_turn(prompt)?;
         let result = self.runtime.run_turn(self.session_id, input).await;
         let success = result.as_ref().is_ok_and(|turn| turn.success);
@@ -3015,7 +3025,6 @@ pub async fn build_with_options(
         .iter()
         .filter(|event| matches!(&event.data, everruns_core::EventData::ToolCompleted(_)))
         .count();
-    let active_messages = crate::runtime::session_log::messages_from_events(&active_events);
     if let Some(title) = latest_session_title(&active_events) {
         update_session_workspace_title(&session_dir, &title)?;
     }
@@ -3023,17 +3032,21 @@ pub async fn build_with_options(
     // Only the selected timeline branch enters the live stores. Abandoned
     // suffixes remain in events.jsonl for redo and local history inspection.
     event_bus_typed.seed_replayed(active_events).await;
-    if !active_messages.is_empty() {
-        message_store.seed(session_id, active_messages).await;
-    }
-    let event_bus: Arc<dyn everruns_runtime::EventBus> = event_bus_typed.clone();
-
     // Start from the in-memory backend bundle, preserving Yolop's durable
-    // event bus and replay-seeded message store, then let everruns-local attach
-    // the SQLite-backed task registry and schedule store.
-    let base_backends = RuntimeBackends::in_memory()
-        .with_event_bus(event_bus)
-        .with_message_store(message_store)
+    // canonical event log, then let everruns-local attach the SQLite-backed
+    // task registry and schedule store.
+    //
+    // The same emitter fills both event slots, and they are different
+    // contracts: `event_log` is the durable, sole conversation write path,
+    // while `event_sink` is lossy post-commit observation feeding the TUI and
+    // ACP streams. There is no message store any more — messages are a
+    // projection of the canonical log, which is why the replayed branch is
+    // seeded into the emitter above rather than into a second store.
+    let event_log: Arc<dyn everruns_host::EventLog> = event_bus_typed.clone();
+    let event_sink: Arc<dyn everruns_host::EventSink> = event_bus_typed.clone();
+    let base_backends = HostBackends::in_memory()
+        .with_event_log(event_log)
+        .with_event_sink(event_sink)
         .with_compaction_checkpoint_store(compaction_checkpoints)
         .with_connection_resolver(connection_resolver);
     let local_profile = LocalProfile::new(sessions_dir.join("everruns-local"))
@@ -3948,8 +3961,8 @@ mod tests {
         // AGENTS.md is the sole project-instructions file — CLAUDE.md and
         // .agents.md are intentionally no longer read.
         assert_eq!(
-            agent_instructions.config,
-            serde_json::json!({ "files": ["AGENTS.md"] })
+            agent_instructions.config_value(),
+            &serde_json::json!({ "files": ["AGENTS.md"] })
         );
     }
 
@@ -3961,7 +3974,10 @@ mod tests {
             .find(|capability| capability.capability_id() == SESSION_CAPABILITY_ID)
             .expect("session capability must be enabled");
 
-        assert_eq!(session.config, serde_json::json!({ "auto_title": true }));
+        assert_eq!(
+            session.config_value(),
+            &serde_json::json!({ "auto_title": true })
+        );
         assert!(YOLOP_NEVER_DEFER_TOOLS.contains(&"write_session_title"));
     }
 
@@ -4168,7 +4184,7 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn build_exposes_connector_tools_by_default() {
-        use everruns_runtime::RuntimeHostAdapter;
+        use everruns_host::RuntimeHostAdapter;
 
         let workspace = tempfile::tempdir().expect("workspace");
         let sessions = tempfile::tempdir().expect("sessions");
@@ -4236,7 +4252,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn scripted_title_tool_updates_runtime_event_log_and_metadata() {
         use everruns_core::events::EventData;
-        use everruns_core::llmsim_driver::{SimToolCall, SimTurn};
+        use everruns_test_support::llmsim_driver::{SimToolCall, SimTurn};
 
         let workspace = tempfile::tempdir().expect("workspace");
         let sessions = tempfile::tempdir().expect("sessions");
@@ -4304,7 +4320,7 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn provider_stream_stall_recovers_through_yolop_runtime_builder() {
-        use everruns_core::llmsim_driver::SimTurn;
+        use everruns_test_support::llmsim_driver::SimTurn;
 
         let workspace = tempfile::tempdir().expect("workspace");
         let sessions = tempfile::tempdir().expect("sessions");
@@ -4354,7 +4370,7 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn misaligned_retry_budget_fails_a_recoverable_stream_stall() {
-        use everruns_core::llmsim_driver::SimTurn;
+        use everruns_test_support::llmsim_driver::SimTurn;
 
         // Prove the production bug class: when max_retry_elapsed is shorter
         // than the stall window, the first recovery attempt is clipped and the
@@ -4426,7 +4442,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn real_turn_batches_independent_work_with_bookkeeping() {
         use everruns_core::events::EventData;
-        use everruns_core::llmsim_driver::{SimToolCall, SimTurn};
+        use everruns_test_support::llmsim_driver::{SimToolCall, SimTurn};
 
         let workspace = tempfile::tempdir().expect("workspace");
         std::fs::write(workspace.path().join("alpha.txt"), "ALPHA\n").expect("seed alpha");
@@ -4534,7 +4550,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn real_tool_hooks_compact_runaway_reads_and_enforce_one_checkpoint() {
         use everruns_core::events::EventData;
-        use everruns_core::llmsim_driver::{SimToolCall, SimTurn};
+        use everruns_test_support::llmsim_driver::{SimToolCall, SimTurn};
 
         let workspace = tempfile::tempdir().expect("workspace");
         std::fs::write(
@@ -4781,8 +4797,8 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn scripted_subagent_runs_in_a_real_child_session() {
-        use everruns_core::llmsim_driver::{SimToolCall, SimTurn};
         use everruns_core::session_task::{SessionTaskState, TASK_KIND_SUBAGENT};
+        use everruns_test_support::llmsim_driver::{SimToolCall, SimTurn};
 
         let workspace = tempfile::tempdir().expect("workspace");
         let sessions = tempfile::tempdir().expect("sessions");
@@ -4866,7 +4882,7 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn build_uses_everruns_local_backend_stores() {
-        use everruns_runtime::RuntimeHostAdapter;
+        use everruns_host::RuntimeHostAdapter;
 
         let workspace = tempfile::tempdir().expect("workspace");
         let sessions = tempfile::tempdir().expect("sessions");
@@ -4895,7 +4911,7 @@ mod tests {
             built
                 .handles
                 .runtime
-                .schedule_store(everruns_runtime::in_process_internal_org_id(
+                .schedule_store(everruns_host::in_process_internal_org_id(
                     everruns_core::DEFAULT_ORG_PUBLIC_ID
                 ))
                 .is_some(),
@@ -6750,7 +6766,7 @@ mod tests {
         assert_eq!(contextual.blocks[0].start_line, 1);
         assert_eq!(contextual.blocks[0].end_line, 3);
 
-        for blocked_dir in everruns_runtime::DEFAULT_WRITE_BLOCKLIST {
+        for blocked_dir in WRITE_BLOCKLIST {
             let path = format!("/nested/{blocked_dir}/blocked.txt");
             let result = store.write_file(session_id, &path, "blocked", "text").await;
             assert!(
@@ -7210,7 +7226,7 @@ mod tests {
             .find(|cap| cap.capability_id() == SUBAGENTS_CAPABILITY_ID)
             .expect("subagents capability must be enabled");
 
-        assert_eq!(subagents.config["max_active_descendant_tasks"], 32);
+        assert_eq!(subagents.config_value()["max_active_descendant_tasks"], 32);
         assert!(!YOLOP_NEVER_DEFER_TOOLS.contains(&"spawn_agent"));
     }
 
@@ -7596,7 +7612,7 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn real_turn_reveals_deferred_mutation_without_dropping_agent_policy() {
-        use everruns_core::llmsim_driver::{SimToolCall, SimTurn};
+        use everruns_test_support::llmsim_driver::{SimToolCall, SimTurn};
 
         let workspace = tempfile::tempdir().expect("workspace");
         std::fs::write(
@@ -7732,11 +7748,15 @@ mod tests {
             .iter()
             .find(|cap| cap.capability_id() == COMPACTION_CAPABILITY_ID)
             .expect("durable compaction must be enabled");
-        assert_eq!(compaction.config["strategy"], "auto");
-        assert_eq!(compaction.config["proactive"], true);
-        assert_eq!(compaction.config["budget_percent"], serde_json::json!(0.85));
+        assert_eq!(compaction.config_value()["strategy"], "auto");
+        assert_eq!(compaction.config_value()["proactive"], true);
+        assert_eq!(
+            compaction.config_value()["budget_percent"],
+            serde_json::json!(0.85)
+        );
         let config: everruns_core::capabilities::CompactionConfig =
-            serde_json::from_value(compaction.config.clone()).expect("valid compaction config");
+            serde_json::from_value(compaction.config_value().clone())
+                .expect("valid compaction config");
         assert_eq!(
             config.cost_control.compact_after_tool_result_bytes,
             256 * 1024
@@ -7802,7 +7822,7 @@ mod tests {
             .find(|cap| cap.capability_id() == AGENT_INSTRUCTIONS_CAPABILITY_ID)
             .expect("agent instructions");
         assert_eq!(
-            agent_instructions.config["files"],
+            agent_instructions.config_value()["files"],
             serde_json::json!(["AGENTS.md"])
         );
     }

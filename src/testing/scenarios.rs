@@ -21,8 +21,10 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use everruns_core::llmsim_driver::{LlmSimConfig, OnExhausted, SimError, SimToolCall, SimTurn};
 use everruns_core::session_task::SessionTaskState;
+use everruns_test_support::llmsim_driver::{
+    LlmSimConfig, OnExhausted, SimError, SimToolCall, SimTurn,
+};
 use serde_json::json;
 
 use crate::config::SettingsStore;
@@ -87,7 +89,7 @@ async fn build_scripted_runtime_with_workspace_and_options(
 
 /// Drive one user turn against the scripted runtime under a wall-clock
 /// timeout so a hung agent loop fails the test instead of hanging CI.
-async fn run_single_turn(runtime: &BuiltRuntime, user_text: &str) -> everruns_runtime::TurnResult {
+async fn run_single_turn(runtime: &BuiltRuntime, user_text: &str) -> everruns_host::TurnResult {
     let session_id = runtime.handles.session_id;
     let input = runtime.model.input_message(user_text.to_string());
     tokio::time::timeout(

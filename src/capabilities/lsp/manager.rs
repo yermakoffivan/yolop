@@ -16,6 +16,14 @@ use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::Mutex;
 
+// TM-FS: upstream deprecated `DEFAULT_WRITE_BLOCKLIST` in favour of
+// `WorkspacePolicy`. Swapping yolop's write-protection over is a
+// security-relevant change that deserves its own review rather than riding
+// along with the 0.18 migration, so the legacy list stays for now behind a
+// single alias instead of an `allow` at every call site.
+#[allow(deprecated)]
+const WRITE_BLOCKLIST: &[&str] = everruns_host::DEFAULT_WRITE_BLOCKLIST;
+
 pub(crate) const DEFAULT_REQUEST_TIMEOUT_MS: u64 = 60_000;
 pub(crate) const MAX_REQUEST_TIMEOUT_MS: u64 = 600_000;
 pub(crate) const DEFAULT_DIAGNOSTICS_WAIT_MS: u64 = 15_000;
@@ -595,7 +603,7 @@ fn workspace_file(root: &Path, uri: &str) -> Result<PathBuf> {
     {
         if let Component::Normal(name) = component
             && let Some(name) = name.to_str()
-            && everruns_runtime::DEFAULT_WRITE_BLOCKLIST.contains(&name)
+            && WRITE_BLOCKLIST.contains(&name)
         {
             bail!(
                 "server proposed an edit inside the protected directory `{name}`: {}",

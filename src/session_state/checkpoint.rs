@@ -15,7 +15,13 @@ use everruns_core::events::Event;
 use everruns_core::in_memory::InMemoryMessageRetriever;
 use everruns_core::session_task::SessionTaskRegistry;
 use everruns_core::typed_id::SessionId;
-use everruns_runtime::DEFAULT_WRITE_BLOCKLIST;
+// TM-FS: upstream deprecated `WRITE_BLOCKLIST` in favour of
+// `WorkspacePolicy`. Swapping yolop's write-protection over is a
+// security-relevant change that deserves its own review rather than riding
+// along with the 0.18 migration, so the legacy list stays for now behind a
+// single alias instead of an `allow` at every call site.
+#[allow(deprecated)]
+const WRITE_BLOCKLIST: &[&str] = everruns_host::DEFAULT_WRITE_BLOCKLIST;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{File, OpenOptions};
@@ -739,14 +745,14 @@ impl CheckpointManager {
             )?;
             let mut add = git_command(&info.path, Some(&index));
             add.args(["add", "-A", "--", "."]);
-            for blocked in DEFAULT_WRITE_BLOCKLIST {
+            for blocked in WRITE_BLOCKLIST {
                 add.arg(format!(":(exclude,glob)**/{blocked}/**"));
                 add.arg(format!(":(exclude,glob){blocked}/**"));
             }
             run_git(&mut add, "snapshot workspace")?;
             let mut remove_blocked = git_command(&info.path, Some(&index));
             remove_blocked.args(["rm", "-r", "-f", "--cached", "--ignore-unmatch", "--"]);
-            for blocked in DEFAULT_WRITE_BLOCKLIST {
+            for blocked in WRITE_BLOCKLIST {
                 remove_blocked.arg(format!(":(glob)**/{blocked}/**"));
                 remove_blocked.arg(format!(":(glob){blocked}/**"));
             }
@@ -1141,7 +1147,7 @@ fn validate_relative_path(relative: &str) -> Result<()> {
             )
         })
         || path.components().any(|component| {
-            matches!(component, Component::Normal(name) if DEFAULT_WRITE_BLOCKLIST.iter().any(|blocked| name == std::ffi::OsStr::new(blocked)))
+            matches!(component, Component::Normal(name) if WRITE_BLOCKLIST.iter().any(|blocked| name == std::ffi::OsStr::new(blocked)))
         })
     {
         bail!("unsafe checkpoint path `{relative}`");
@@ -1209,7 +1215,6 @@ mod tests {
     use everruns_core::events::{EventContext, EventRequest, InputMessageData};
     use everruns_core::message::Message;
     use everruns_core::traits::EventEmitter;
-    use everruns_runtime::EventBus;
     use tempfile::TempDir;
 
     fn git(path: &Path, args: &[&str]) {

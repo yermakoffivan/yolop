@@ -602,8 +602,8 @@ mod tests {
         TaskLinks, new_session_task,
     };
     use everruns_core::{CreateSessionTask, HarnessId, Session, SessionId};
+    use everruns_host::SessionBuilder;
     use everruns_local::{LocalSessionTaskRegistry, SqliteDb};
-    use everruns_runtime::SessionBuilder;
     use serde_json::json;
     use std::collections::HashMap;
 

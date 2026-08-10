@@ -1291,7 +1291,7 @@ async fn run_prompt_once(
     session: Arc<Session>,
     prompt: String,
     input: InputMessage,
-) -> (StopReason, Option<everruns_runtime::TurnResult>) {
+) -> (StopReason, Option<everruns_host::TurnResult>) {
     let handles = session.handles.clone();
     let session_id = handles.session_id;
     let acp_id = session.acp_id.clone();
@@ -1393,7 +1393,7 @@ async fn run_prompt_once(
 async fn completion_followup(
     peer: &Arc<Peer>,
     session: &Arc<Session>,
-    result: &everruns_runtime::TurnResult,
+    result: &everruns_host::TurnResult,
 ) -> Option<String> {
     let session_id = session.handles.session_id;
     if !session.user_ask_enabled || !session.user_ask_store.is_active(session_id) {

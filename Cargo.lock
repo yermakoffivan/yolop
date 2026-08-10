@@ -1706,8 +1706,7 @@ dependencies = [
 [[package]]
 name = "everruns-anthropic"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f8990a990ea0d683fb0aeae17b49656bff3291c5400abdb09d728b40f9bf060"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1722,10 +1721,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "everruns-capability"
+version = "0.17.26"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "everruns-core"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "470bcc7a8f85695be1d4e3f473d2cd28cd7d2111683576d3601abc6564f24a5d"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "a2a-client-lf",
  "a2a-lf",
@@ -1738,6 +1745,7 @@ dependencies = [
  "cron",
  "ed25519-dalek 3.0.0",
  "eventsource-stream",
+ "everruns-capability",
  "everruns-provider",
  "fetchkit",
  "futures",
@@ -1745,7 +1753,6 @@ dependencies = [
  "hex",
  "inventory",
  "jsonschema",
- "llmsim",
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
@@ -1773,8 +1780,7 @@ dependencies = [
 [[package]]
 name = "everruns-engine"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0c7abe44b52c2fd90d6fa68234f5eb43249083463c983f832adb3e8da2f0a58"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "chrono",
  "everruns-core",
@@ -1785,8 +1791,7 @@ dependencies = [
 [[package]]
 name = "everruns-host"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc021ef2d582b75b922803151f5fefac2180a8aa7ab6234c462d492cb96844e9"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1809,8 +1814,7 @@ dependencies = [
 [[package]]
 name = "everruns-integrations-daytona"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9852644a88117281722580a9aaa3153a15b66b866f22a9721d2320566dcbea18"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1826,8 +1830,7 @@ dependencies = [
 [[package]]
 name = "everruns-integrations-duckduckgo"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26a1d350885b7f79494b7114de9d02116bfbb7c25f88f44b9a89f2a3242d3128"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "async-trait",
  "everruns-core",
@@ -1842,8 +1845,7 @@ dependencies = [
 [[package]]
 name = "everruns-integrations-parallel"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "759d1f593bc502c189da416c51c6981c1a80791f6cca1362e3d5cd3e0dc03488"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "async-trait",
  "everruns-core",
@@ -1856,8 +1858,7 @@ dependencies = [
 [[package]]
 name = "everruns-local"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41acbad24283f103eeafc4a57693cb72d17a900f1c53ccb8a93238b15ec18907"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1881,8 +1882,7 @@ dependencies = [
 [[package]]
 name = "everruns-mcp"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00c91eb0235cb56a6b7c1f8999314a7b97ad8c0ab7002edcfd6545d946dc5f05"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1898,8 +1898,7 @@ dependencies = [
 [[package]]
 name = "everruns-openai"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f4bc32038f550dffe9333b79450e7e8a97ac31e7ef84d68e6724191204fb41e"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1914,8 +1913,7 @@ dependencies = [
 [[package]]
 name = "everruns-openrouter"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67ec3e8090531d98cc1d32d4b0af19d21338dd528a74fa910f743d5befc3b301"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1928,8 +1926,7 @@ dependencies = [
 [[package]]
 name = "everruns-platform"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e495d89fe7114ad76faa6dd62715da78dfc59703a4e8fdbc76ace8d756da050f"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1945,8 +1942,7 @@ dependencies = [
 [[package]]
 name = "everruns-provider"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73f0e030e04374cff9e8edc95df48916ccfadc02167998d934e9572c3ad5b2cb"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1971,14 +1967,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "everruns-runtime"
+name = "everruns-test-support"
 version = "0.17.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8373b819cc5fb412ffbbf28477d172beb43297c3e17fe82600c1e743b825be3d"
+source = "git+https://github.com/everruns/everruns?rev=d0a3dfe#d0a3dfe2abc6d49ef2ee60c5fac388e9630c71b9"
 dependencies = [
+ "anyhow",
  "async-trait",
+ "chrono",
  "everruns-core",
  "everruns-host",
+ "futures",
+ "inventory",
+ "llmsim",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -7829,6 +7832,7 @@ dependencies = [
  "eventsource-stream",
  "everruns-anthropic",
  "everruns-core",
+ "everruns-host",
  "everruns-integrations-daytona",
  "everruns-integrations-duckduckgo",
  "everruns-integrations-parallel",
@@ -7837,7 +7841,7 @@ dependencies = [
  "everruns-openai",
  "everruns-openrouter",
  "everruns-platform",
- "everruns-runtime",
+ "everruns-test-support",
  "flate2",
  "futures",
  "html-escape",

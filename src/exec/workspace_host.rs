@@ -6,7 +6,7 @@
 
 use anyhow::{Context, Result, bail};
 use everruns_core::session_path::to_session_path;
-use everruns_runtime::RealDiskFileStore;
+use everruns_host::RealDiskFileStore;
 use std::ops::Deref;
 use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, Mutex, RwLock};

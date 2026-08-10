@@ -240,7 +240,7 @@ impl Tool for GetConfigTool {
                                 json!({
                                     "index": index,
                                     "ref": cap.capability_id(),
-                                    "config": cap.config,
+                                    "config": cap.config_value(),
                                 })
                             })
                             .collect();

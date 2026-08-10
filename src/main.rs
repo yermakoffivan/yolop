@@ -1698,7 +1698,7 @@ async fn run_print_goal(
 }
 
 struct PrintTurn {
-    result: everruns_runtime::TurnResult,
+    result: everruns_host::TurnResult,
     output: Vec<String>,
 }
 

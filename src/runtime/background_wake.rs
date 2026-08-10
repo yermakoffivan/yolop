@@ -21,9 +21,9 @@ use everruns_core::session::Session;
 use everruns_core::session_task::{SessionTask, SessionTaskRegistry};
 use everruns_core::typed_id::{AgentId, HarnessId, SessionId};
 use everruns_core::{TaskTransition, wake_text_for};
+use everruns_host::{InProcessRuntime, RuntimeSessionStore, SessionBuilder};
 use everruns_local::{HostRoutedRunner, LocalSessionRunner, WakeRoutes};
 use everruns_platform::{PlatformCreateSessionRequest, PlatformMessage};
-use everruns_runtime::{InProcessRuntime, RuntimeSessionStore, SessionBuilder};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
@@ -596,10 +596,10 @@ mod tests {
     use everruns_core::session_task::{
         CreateSessionTask, SessionTaskState, TaskWakePolicy, new_session_task,
     };
-    use everruns_runtime::RuntimeBackends;
+    use everruns_host::HostBackends;
 
     fn runner() -> WakeRunner {
-        let backends = RuntimeBackends::in_memory();
+        let backends = HostBackends::in_memory();
         WakeRunner::new(Arc::new(OnceLock::new()), backends.session_store, None)
     }
 
