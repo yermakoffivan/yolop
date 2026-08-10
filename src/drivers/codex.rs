@@ -8,6 +8,7 @@ use everruns_core::driver_registry::{
     ProviderMetadata, ProviderOpaqueContext,
 };
 use everruns_core::driver_registry::{DiscoveredModel, DriverRegistry};
+use everruns_core::ProviderEndpoint;
 use everruns_core::error::{AgentLoopError, LlmErrorKind, Result as EverrunsResult};
 use everruns_core::tool_types::{ToolCall, ToolDefinition};
 use everruns_core::{
@@ -307,8 +308,14 @@ fn persist_tokens(tokens: &CodexTokens, store: Option<&dyn CodexAuthStore>) -> E
 
 #[async_trait]
 impl ChatDriver for CodexChatDriver {
+    // 0.17.26 separated providers from drivers: endpoint and auth policy now
+    // arrive per call instead of being baked into the driver. Codex is bound to
+    // ChatGPT's own endpoint and signs with rotating OAuth tokens it owns, so it
+    // ignores the supplied endpoint — the same thing upstream's own
+    // `ProviderBoundDriver` does for drivers that carry their own binding.
     async fn chat_completion_stream(
         &self,
+        _endpoint: &ProviderEndpoint,
         messages: Vec<LlmMessage>,
         config: &LlmCallConfig,
     ) -> EverrunsResult<LlmResponseStream> {
@@ -389,7 +396,10 @@ impl ChatDriver for CodexChatDriver {
         Ok(converted)
     }
 
-    async fn list_models(&self) -> EverrunsResult<Option<Vec<DiscoveredModel>>> {
+    async fn list_models(
+        &self,
+        _endpoint: &ProviderEndpoint,
+    ) -> EverrunsResult<Option<Vec<DiscoveredModel>>> {
         Ok(None)
     }
 
@@ -405,7 +415,11 @@ impl ChatDriver for CodexChatDriver {
         })
     }
 
-    async fn compact(&self, request: CompactRequest) -> EverrunsResult<Option<CompactResponse>> {
+    async fn compact(
+        &self,
+        _endpoint: &ProviderEndpoint,
+        request: CompactRequest,
+    ) -> EverrunsResult<Option<CompactResponse>> {
         let tokens = self.token_snapshot().await?;
         let response = self
             .client

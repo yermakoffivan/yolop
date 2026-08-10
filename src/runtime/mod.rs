@@ -2587,7 +2587,10 @@ impl ModelState {
 
         let config = everruns_core::llm_conversions::provider_config_from_resolved_model(&resolved);
         let driver = self.driver_registry.create_chat_driver(&config)?;
-        let discovered = tokio::time::timeout(std::time::Duration::from_secs(10), driver.list_models())
+        let discovered = tokio::time::timeout(
+            std::time::Duration::from_secs(10),
+            driver.list_models(&everruns_core::ProviderEndpoint::default()),
+        )
             .await
             .map_err(|_| anyhow!("{provider_name} model availability check timed out; the turn was not started and is safe to resume"))??;
 
