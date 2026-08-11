@@ -132,7 +132,14 @@ everruns-host = { version = "0.17.26", features = ["mcp-stdio"] }
 # The llmsim driver moved out of everruns-core in #3107. Yolop ships
 # `--provider llmsim` as a user-facing offline mode, not just a test fixture, so
 # this is a normal dependency despite the crate's name.
+# The direct egress implementation moved out of everruns-core into its own
+# crate; yolop uses it for MCP OAuth discovery.
+everruns-http = "0.17.26"
 everruns-test-support = "0.17.26"
+# Filesystem and web-fetch capability implementations moved out of
+# everruns-core into their own integration crates (#3119).
+everruns-integrations-filesystem = "0.17.26"
+everruns-integrations-web-fetch = "0.17.26"
 everruns-integrations-duckduckgo = "0.17.26"
 everruns-integrations-parallel = "0.17.26"
 everruns-integrations-daytona = "0.17.26"
@@ -177,18 +184,21 @@ strip = "debuginfo"
 # Drop this whole section and move the versions to the published 0.18 release
 # once it exists; a git dependency makes yolop unpublishable.
 [patch.crates-io]
-everruns-anthropic = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-capability = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-core = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-engine = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-host = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-local = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-mcp = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-openai = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-openrouter = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-platform = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-provider = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-test-support = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-integrations-daytona = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-integrations-duckduckgo = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
-everruns-integrations-parallel = { git = "https://github.com/everruns/everruns", rev = "d0a3dfe" }
+everruns-anthropic = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-capability = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-core = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-engine = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-host = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-http = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-integrations-filesystem = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-integrations-web-fetch = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-local = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-mcp = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-openai = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-openrouter = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-platform = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-provider = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-test-support = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-integrations-daytona = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-integrations-duckduckgo = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }
+everruns-integrations-parallel = { git = "https://github.com/everruns/everruns", rev = "bd4b9af" }

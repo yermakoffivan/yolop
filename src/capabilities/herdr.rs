@@ -396,7 +396,7 @@ impl Capability for HerdrCapability {
     }
 
     fn dependencies(&self) -> Vec<&'static str> {
-        vec![everruns_core::capabilities::SESSION_FILE_SYSTEM_CAPABILITY_ID]
+        vec![everruns_integrations_filesystem::SESSION_FILE_SYSTEM_CAPABILITY_ID]
     }
 }
 

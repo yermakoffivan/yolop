@@ -9,8 +9,7 @@
 use crate::capabilities::narration::narrate_session_task_tool;
 use async_trait::async_trait;
 use everruns_core::capabilities::{
-    Capability, CapabilityLocalization, CapabilityStatus, SessionTasksCapability,
-    SystemPromptContext,
+    Capability, CapabilityLocalization, CapabilityStatus, SystemPromptContext,
 };
 use everruns_core::session_schedule::SessionSchedule;
 use everruns_core::tool_narration::ToolNarrationPhase;
@@ -21,6 +20,7 @@ use everruns_core::{
     AgentLoopError, ScheduleId, SessionTask, SessionTaskRegistry, SessionTaskState,
     SessionTaskUpdate,
 };
+use everruns_platform::capabilities::SessionTasksCapability;
 use serde_json::{Value, json};
 
 const CANCEL_TASK: &str = "cancel_task";

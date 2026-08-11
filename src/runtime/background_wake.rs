@@ -14,10 +14,10 @@
 //! runtime.
 
 use async_trait::async_trait;
+use everruns_core::ExecutionSession;
 use everruns_core::error::{AgentLoopError, Result};
 use everruns_core::message::MessageRole;
 use everruns_core::message_retriever::InputMessage;
-use everruns_core::session::Session;
 use everruns_core::session_task::{SessionTask, SessionTaskRegistry};
 use everruns_core::typed_id::{AgentId, HarnessId, SessionId};
 use everruns_core::{TaskTransition, wake_text_for};
@@ -504,7 +504,7 @@ impl LocalSessionRunner for WakeRunner {
         title: Option<&str>,
         _locale: Option<&str>,
         parent_session_id: Option<SessionId>,
-    ) -> Result<Session> {
+    ) -> Result<ExecutionSession> {
         let mut session = SessionBuilder::new(harness_id)
             .id(SessionId::new())
             .title(title.unwrap_or("sub-agent"))
@@ -518,7 +518,7 @@ impl LocalSessionRunner for WakeRunner {
     async fn create_session_with_options(
         &self,
         request: PlatformCreateSessionRequest,
-    ) -> Result<Session> {
+    ) -> Result<ExecutionSession> {
         if request.parent_session_id.is_none() {
             return Err(AgentLoopError::tool(
                 "detached local sub-agent sessions are not supported; use lifetime=linked",
@@ -542,11 +542,11 @@ impl LocalSessionRunner for WakeRunner {
         &self,
         _limit: Option<usize>,
         _agent_id: Option<AgentId>,
-    ) -> Result<Vec<Session>> {
+    ) -> Result<Vec<ExecutionSession>> {
         Ok(Vec::new())
     }
 
-    async fn get_session(&self, session_id: SessionId) -> Result<Option<Session>> {
+    async fn get_session(&self, session_id: SessionId) -> Result<Option<ExecutionSession>> {
         self.sessions.get_session(session_id).await
     }
 

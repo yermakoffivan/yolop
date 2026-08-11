@@ -47,17 +47,16 @@ use anyhow::{Context, Result, anyhow};
 use async_trait::async_trait;
 use everruns_core::capabilities::{
     AGENT_INSTRUCTIONS_CAPABILITY_ID, AgentInstructionsCapability, BTW_CAPABILITY_ID,
-    BtwCapability, COMPACTION_CAPABILITY_ID, CompactionCapability, FileSystemCapability,
-    INFINITY_CONTEXT_CAPABILITY_ID, InfinityContextCapability, LOOP_DETECTION_CAPABILITY_ID,
-    LoopDetectionCapability, MessageMetadataCapability, PROMPT_CACHING_CAPABILITY_ID,
-    PromptCachingCapability, SESSION_CAPABILITY_ID, SESSION_FILE_SYSTEM_CAPABILITY_ID,
-    SESSION_STORAGE_CAPABILITY_ID, SESSION_TASKS_CAPABILITY_ID, SKILLS_CAPABILITY_ID,
-    STATELESS_TODO_LIST_CAPABILITY_ID, SUBAGENTS_CAPABILITY_ID, ScopedSkillsCapability,
-    SessionCapability, SessionStorageCapability, StatelessTodoListCapability, SubagentCapability,
-    TOOL_OUTPUT_PERSISTENCE_CAPABILITY_ID, TOOL_SEARCH_CAPABILITY_ID,
-    ToolOutputPersistenceCapability, ToolSearchCapability, USER_HOOKS_CAPABILITY_ID,
-    UserHooksCapability, WEB_FETCH_CAPABILITY_ID, WebFetchCapability,
+    BtwCapability, COMPACTION_CAPABILITY_ID, CompactionCapability, INFINITY_CONTEXT_CAPABILITY_ID,
+    InfinityContextCapability, LOOP_DETECTION_CAPABILITY_ID, LoopDetectionCapability,
+    MessageMetadataCapability, PROMPT_CACHING_CAPABILITY_ID, PromptCachingCapability,
+    SESSION_CAPABILITY_ID, SESSION_STORAGE_CAPABILITY_ID, SKILLS_CAPABILITY_ID,
+    STATELESS_TODO_LIST_CAPABILITY_ID, ScopedSkillsCapability, SessionCapability,
+    SessionStorageCapability, StatelessTodoListCapability, TOOL_OUTPUT_PERSISTENCE_CAPABILITY_ID,
+    TOOL_SEARCH_CAPABILITY_ID, ToolOutputPersistenceCapability, ToolSearchCapability,
 };
+// #3111/#3119 moved the hosted and environment capability implementations out
+// of everruns-core into the platform and integration crates.
 use everruns_core::command::CommandDescriptor;
 use everruns_core::driver_registry::{DriverRegistry, ProviderMetadata};
 use everruns_core::error::AgentLoopError;
@@ -85,8 +84,14 @@ use everruns_host::{
 };
 use everruns_integrations_daytona::DaytonaCapability;
 use everruns_integrations_duckduckgo::DuckDuckGoCapability;
+use everruns_integrations_filesystem::{FileSystemCapability, SESSION_FILE_SYSTEM_CAPABILITY_ID};
+use everruns_integrations_web_fetch::{WEB_FETCH_CAPABILITY_ID, WebFetchCapability};
 use everruns_local::{LocalBackends, LocalProfile, LocalScheduleRunnerHandle};
 use everruns_mcp::{McpAuthProvider, McpAuthRequest, McpCredential};
+use everruns_platform::capabilities::{
+    SESSION_TASKS_CAPABILITY_ID, SUBAGENTS_CAPABILITY_ID, SubagentCapability,
+    USER_HOOKS_CAPABILITY_ID, UserHooksCapability,
+};
 use everruns_test_support::LlmSimRuntimeExt;
 use everruns_test_support::llmsim_driver::LlmSimConfig;
 
@@ -289,7 +294,7 @@ pub(crate) async fn discover_mcp_tool_names(
         return Vec::new();
     }
     let client = everruns_mcp::McpClient::new(
-        Arc::new(everruns_core::DirectEgressService::default()),
+        Arc::new(everruns_http::DirectEgressService::default()),
         Arc::new(StoredMcpAuthProvider::new(connections.clone())),
     );
     let mut names = Vec::new();
@@ -3580,7 +3585,6 @@ pub async fn build_with_options(
     let platform = PlatformDefinition::builder()
         .capability_registry(capabilities)
         .driver_registry(driver_registry)
-        .connector(everruns_integrations_daytona::connection::DaytonaConnector)
         .session_file_system_factory(Arc::new(CodingCliSessionFileSystemFactory {
             workspace: workspace_host.clone(),
             session_dir: session_dir.clone(),
@@ -3623,14 +3627,10 @@ pub async fn build_with_options(
             "everruns_runtime_version",
             env!("YOLOP_EVERRUNS_RUNTIME_VERSION"),
         )
-        .display_name("Coding CLI")
-        .description("Embedded terminal coding agent.")
         // Attribute LLM calls routed through OpenRouter so they show up under
         // Yolop on OpenRouter's app dashboards. The driver forwards these as
         // the `HTTP-Referer` and `X-Title` headers (everruns 0.14+).
-        .openrouter_attribution("https://github.com/everruns/yolop", "Yolop")
-        .tag("example")
-        .tag("coding");
+        .openrouter_attribution("https://github.com/everruns/yolop", "Yolop");
     for cap in harness_capabilities {
         harness_builder = harness_builder.capability(cap);
     }
@@ -3642,9 +3642,8 @@ pub async fn build_with_options(
     let agent_builder = AgentBuilder::new("coding-agent", AGENT_PROMPT)
         .display_name("Coding Agent")
         .description("Reads, edits, and runs commands inside a project workspace.")
-        .parallel_tool_calls(true)
-        .tag("example")
-        .tag("coding");
+        // AgentBuilder dropped free-form tags in 0.18.
+        .parallel_tool_calls(true);
     let agent_id = agent_builder.agent_id();
 
     let session_builder = SessionBuilder::new(harness_id)

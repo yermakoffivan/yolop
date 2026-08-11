@@ -20,8 +20,7 @@ use crate::capabilities::narration::narrate_spawn_background;
 use crate::tui::session_tasks_view::{load_task_tree, render_task_tree};
 use async_trait::async_trait;
 use everruns_core::capabilities::{
-    BackgroundExecutionCapability, Capability, CapabilityLocalization, CapabilityStatus,
-    SystemPromptContext,
+    Capability, CapabilityLocalization, CapabilityStatus, SystemPromptContext,
 };
 use everruns_core::command::{
     CommandDescriptor, CommandExecutionContext, CommandResult, CommandSource, ExecuteCommandRequest,
@@ -33,6 +32,7 @@ use everruns_core::tool_types::{ToolCall, ToolDefinition};
 use everruns_core::tools::Tool;
 use everruns_core::traits::SessionStore;
 use everruns_core::typed_id::SessionId;
+use everruns_platform::capabilities::BackgroundExecutionCapability;
 use std::sync::Arc;
 
 pub(crate) const BACKGROUND_CAPABILITY_ID: &str = "background";
@@ -197,6 +197,14 @@ impl Capability for NarratedBackgroundExecutionCapability {
         self.inner.category()
     }
 
+    /// Delegate activation too, not just presentation. The capability is
+    /// auto-activating — it turns on when some tool declares
+    /// `supports_background` — so a wrapper that inherits the default
+    /// `false` silently withholds `spawn_background` from the model.
+    fn auto_activates_for(&self, tools: &[everruns_core::tool_types::ToolDefinition]) -> bool {
+        self.inner.auto_activates_for(tools)
+    }
+
     fn tools(&self) -> Vec<Box<dyn Tool>> {
         self.inner.tools()
     }
@@ -289,7 +297,7 @@ mod tests {
         async fn get_session(
             &self,
             _session_id: SessionId,
-        ) -> everruns_core::Result<Option<everruns_core::Session>> {
+        ) -> everruns_core::Result<Option<everruns_core::ExecutionSession>> {
             Ok(None)
         }
     }

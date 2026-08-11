@@ -121,35 +121,26 @@ impl Capability for GoalCapability {
 mod tests {
     use super::*;
     use crate::session_state::goal::GOAL_EVALUATE_ARG;
+    use everruns_core::ExecutionSession;
     use everruns_core::command_host::{
         CommandHost, CommandTurnContext, SessionCompletion, SessionCompletionError,
     };
-    use everruns_core::session::{Session, SessionStatus};
     use everruns_core::typed_id::{HarnessId, SessionId};
     use std::sync::Mutex;
 
-    fn test_session(session_id: SessionId) -> Session {
-        Session {
-            // 0.18 records how a session started and an outcome-oriented
-            // activity; test fixtures take the defaults.
-            source: Default::default(),
-            activity: Default::default(),
+    fn test_session(session_id: SessionId) -> ExecutionSession {
+        // 0.18 replaced the stored session record with a leaner resolved
+        // execution snapshot: ownership, previews and lifecycle status live on
+        // the platform record now, not on the value execution sees.
+        ExecutionSession {
             id: session_id,
-            workspace_id: everruns_core::WorkspaceId::from_uuid(session_id.uuid()),
             organization_id: everruns_core::DEFAULT_ORG_PUBLIC_ID.to_string(),
+            workspace_id: everruns_core::WorkspaceId::from_uuid(session_id.uuid()),
             harness_id: HarnessId::new(),
             agent_id: None,
-            agent_version_id: None,
-            agent_identity_id: None,
-            owner_principal_id: everruns_core::PrincipalId::from_seed(1),
-            resolved_owner_user_id: None,
-            owner: None,
-            effective_owner: None,
             title: None,
             goal: None,
             locale: None,
-            preview: None,
-            output_preview: None,
             tags: vec![],
             model_id: None,
             capabilities: vec![],
@@ -161,18 +152,10 @@ mod tests {
             network_access: None,
             max_iterations: None,
             parallel_tool_calls: None,
-            status: SessionStatus::Started,
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-            started_at: None,
-            finished_at: None,
+            status: everruns_core::SessionExecutionState::Started,
             usage: None,
-            is_pinned: None,
-            active_schedule_count: None,
-            features: vec![],
             parent_session_id: None,
             forked_from_session_id: None,
-            forked_from_sequence: None,
             blueprint_id: None,
             blueprint_config: None,
         }

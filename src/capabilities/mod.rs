@@ -71,8 +71,8 @@ pub(crate) use worktree_cmd::WorktreeCapability;
 
 #[cfg(test)]
 mod tests {
-    use everruns_core::FileSystemCapability;
     use everruns_core::capabilities::Capability;
+    use everruns_integrations_filesystem::FileSystemCapability;
 
     #[test]
     fn upstream_edit_file_schema_is_unambiguous() {

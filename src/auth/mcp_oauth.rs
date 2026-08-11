@@ -3,14 +3,14 @@
 use crate::connectors::{ConnectionStore, StoredConnection};
 use async_trait::async_trait;
 use everruns_core::egress::{
-    DirectEgressService, EgressRequest, EgressResponse, EgressResult, EgressService,
-    EgressStreamResponse,
+    EgressRequest, EgressResponse, EgressResult, EgressService, EgressStreamResponse,
 };
+use everruns_http::DirectEgressService;
 use everruns_mcp::oauth::McpTokenStore;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-pub(crate) type McpOAuthTokenSet = everruns_core::oauth::TokenSet;
+pub(crate) type McpOAuthTokenSet = everruns_mcp::oauth::TokenSet;
 
 const KIND_FIELD: &str = "kind";
 const KIND_OAUTH: &str = "oauth";
