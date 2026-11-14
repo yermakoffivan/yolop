@@ -1304,6 +1304,12 @@ const YOLOP_NEVER_DEFER_TOOLS: &[&str] = &[
     "repo_symbols",
     "ast_grep",
     "write_todos",
+    // The todo prompt asks for `report_done` once tracked work is finished,
+    // so every tracked turn calls it. Deferred, its stub named no parameters
+    // and models guessed `checks`/`outcome: passed`; validation rejected the
+    // call and the turn spent a second report (nightly 2026-11-14,
+    // expected-diagnostic-failure-control: every todo trajectory).
+    "report_done",
     "write_session_title",
     // Only present when `native_edit_tools` is enabled for an OpenAI model.
     // The point of that capability is a shape the model already knows; a
@@ -11986,6 +11992,8 @@ mod tests {
             "repo_symbols",
             "ast_grep",
             "write_todos",
+            // Every tracked turn ends with it; a stub made models guess fields.
+            "report_done",
             "write_session_title",
             "list_skills",
             "activate_skill",
@@ -12352,7 +12360,10 @@ mod tests {
         // spawn_background: ends_at, max_runs, stop_when, budget_usd and
         // wake_when. Reserve 800 bytes for these controls; retain the existing
         // budget for the rest of the surface (measured total: 15,938 bytes).
-        const BASELINE_SCHEMA_BYTES: usize = 14_500 + 710 + 800;
+        // Eager `report_done` adds 650 bytes (measured total: 16,647): every
+        // tracked turn calls it, and its stub cost a rejected call plus a full
+        // context resend each time.
+        const BASELINE_SCHEMA_BYTES: usize = 14_500 + 710 + 800 + 650;
         let workspace = tempfile::tempdir().expect("workspace");
         let sessions = tempfile::tempdir().expect("sessions");
         let settings = Arc::new(SettingsStore::open(sessions.path().join("settings.toml")));
